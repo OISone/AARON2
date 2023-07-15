@@ -1,105 +1,203 @@
-# This is suposed to be a AI virtual assistant from the "Tech Moto" youtube channel
-#
-#Libraries----------------------------------
-import datetime
+# ************************************************************************************
+# *                  Automatic AI Reconnaissance Observation Network                 *
+# *                                   A.A.R.O.N.                                     *
+# ************************************************************************************
+
+
+# ************************************************************************************
+# *           Some Code from the "Tech Moto" YouTube channel                         *
+# *           Additional Code from S-Tech's YouTube Channel                          *
+# ************************************************************************************
+
+# *******************************************
+# *--------------Libraries------------------*
+# *******************************************
+
 
 import pyttsx3
+import pyaudio
 import speech_recognition as sr
 import time
-from openpyxl import *
-import random
-#Variables----------------------------------
-r = sr.Recognizer()
-keywords = [("jarvis",1), ("hey jarvis",1),]
-source = sr.Microphone()
-#Functions----------------------------------
-def Speak(text):
+import musicalbeeps
+import pvporcupine
+import struct
+import os
+import subprocess
+import webbrowser
+
+
+# *******************************************
+# *----------------Variables----------------*
+# *******************************************
+USER = "sir"
+# keywords = [("aaron", 1), ("hey aaron", 1), ]
+
+
+# *******************************************
+# *----------------Functions----------------*
+# *******************************************
+
+
+def Website(url):
+    webbrowser.get().open(url)
+
+
+def Readychirp():
+    player = musicalbeeps.Player(volume = 0.1, mute_output = True)
+    player.play_note("E5b", 0.1)
+    player.play_note("G5b", 0.1)
+    player.play_note("E5b", 0.1)
+
+
+def Capturechirp():
+    player = musicalbeeps.Player(volume = 0.1, mute_output = True)
+    player.play_note("G5b", 0.1)
+    player.play_note("E5b", 0.1)
+
+
+
+def speak(text):
+    global TALKING
     rate = 100
-    engine = pyttsx3.init()
+    engine = pyttsx3.init('sapi5')
     voices = engine.getProperty('voices')
     engine.setProperty('voice', voices[0].id)
-    engine.setProperty('rate',rate+50)
+    TALKING = True
+    print("A.A.R.O.N.: "+text+"\n")
+    engine.setProperty('rate', rate+50)
     engine.say(text)
     engine.runAndWait()
-def callback(recognizer, audio):
-    try:
-        speech_as_text = recognizer.recognize_sphinx(audio, keyword_entries=keywords)
-        print(speech_as_text)
-        if "jarvis" in speech_as_text or "hey jarvis":
-            Speak("Yes sir?")
-            recognize_main()
-    except sr.UnknownValueError:
-        print("Oops! Didn't catch that")
-def start_recognizer():
-    print("Waiting for a keyword...Jarvis or Hey Jarvis")
-    r.listen_in_background(source, callback)
-    time.sleep(1000000)
-def recognize_main():
+    TALKING = False
+
+
+def takeCommand():
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        print("Say something!")
+        Readychirp()
+        print("Listening...", end="")
         audio = r.listen(source)
-    data = ""
+        query = ''
+        Capturechirp()
+
+        try:
+            print("recognizing...", end="")
+            query = r.recognize_google(audio, language='en-US')
+            print(f"User said:{query}")
+
+        except Exception as e:
+            print("Exception:" + str(e))
+
+        return query.lower()
+
+def conversationFlow():
+    talk = True
+    while talk:
+        userSaid = takeCommand()
+        if "hello" in userSaid:
+            speak("hello")
+        if "bye" in userSaid:
+            speak("goodbye")
+        if "how are you" in userSaid:
+            speak("Doing well")
+        if "stop" in userSaid:
+            speak("Stopping sir")
+            break
+        if "exit" in userSaid:
+            speak("ending program")
+            talk = False
+        if "calculator" in userSaid:
+            try:
+                subprocess.Popen("calc")
+                speak("Opening it now sir.")
+            except:
+                speak(" I can't do that Dave")
+                pass
+            break
+
+        if "notepad" in userSaid:
+            try:
+                subprocess.Popen("notepad")
+                speak("Opening notepad now sir")
+            except:
+                speak("There was a problem sir")
+                pass
+            break
+
+        if "flipper" in userSaid:
+            try:
+                subprocess.Popen("c:\\program files\\qflipper\\qflipper.exe")
+                speak("Opening q flipper now sir")
+            except:
+                speak("There was a problem sir")
+                pass
+            break
+        if "firefox" in userSaid:
+            try:
+                subprocess.Popen("c:\\program files\\mozilla firefox\\firefox.exe")
+                speak ("Opening browser now sir")
+            except:
+                speak("there was an error sir")
+                pass
+            break
+        if "obsidian" in userSaid:
+            try:
+                subprocess.Popen("C:\\Users\\OISLT\\AppData\\Local\\Obsidian\\obsidian.exe")
+                speak ("Opening Obsidian now sir")
+            except:
+                speak("there was an error")
+                pass
+            break
+        if"open youtube" in userSaid:
+            speak("opening YouTube " + USER)
+            Website('https://www.youtube.com')
+            break
+
+
+        time.sleep(2)
+
+# *******************************************
+# *-------------Main Program----------------*
+# *******************************************
+def main():
+    porcupine = None
+    pa = None
+    audio_stream =None
+    print("A.A.R.O.N. version 0.01 - Online and Ready!")
+    print("*****************************************************")
+    print("A.A.R.O.N.: Awaiting your call " + USER)
+
     try:
-        data = r.recognize_google(audio)
-        data.lower()
-        print("You said: " + data)
-# Greetings---------------------------------
-        if data in hello_list:
-            hour = datetime.datetime.now().hour
-            if hour>=0 and hour<12:
-                Speak("Good morning, sir")
-            elif hour>=12 and hour<18:
-                Speak("Good Afternoon, Sir")
-            else:
-                Speak("Good Evening, Sir")
-            time.sleep(2)
+        porcupine = pvporcupine.create(keywords=["terminator", "computer"])
+        pa = pyaudio.PyAudio()
+        audio_stream = pa.open(
+            rate=porcupine.sample_rate,
+            channels=1,
+            format=pyaudio.paInt16,
+            input=True,
+            frames_per_buffer=porcupine.frame_length)
+        while True:
+            pcm = audio_stream.read(porcupine.frame_length)
+            pcm = struct.unpack_from("h" * porcupine.frame_length, pcm)
 
-        elif data in how_are_you:
-            Speak(random.choice(reply_how_are_you))
-            time.sleep(2)
+            keyword_index = porcupine.process(pcm)
+            if keyword_index >= 0:
+                print("Hotword Detected... ", end="")
+                conversationFlow()
+                time.sleep(1)
+                print("A.A.R.O.N.: Awating your call " + USER)
+    finally:
+        if porcupine is not None:
+            porcupine.delete()
 
-        elif "what is the time" in data:
-                strTime = datetime.datetime.now().strftime("%H:%M")
-                Speak(f"the time is {strTime}")
-                time.sleep(2)
+        if audio_stream is not None:
+            audio_stream.close()
 
-        elif "what day is it" in data:
-            day = datetime.datetime.today().weekday() +1
-            Day_dict = {1: 'Monday', 2: 'Tuesday',3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6:'Saturday', 7: 'Sunday'}
-            if day in Day_dict.keys():
-                day_of_the_week = Day_dict[day]
-                print(day_of_the_week)
-                Speak("The day is " + day_of_the_week)
-                time.sleep(2)
+        if pa is not None:
+            pa.terminate()
 
-        else:
-            Speak("I'm sorry sir, I did not understand your request")
-    except sr.UnknownValueError:
-        print("Jarvis did not understand your request")
-    except sr.RequestError as e:
-        print("Could not request results from speech recognition service; {0}".format(e))
-def excel():
-    wb = load_workbook("input.xlsx")
-    wu = wb.get_sheet_by_name('User')
-    wr = wb.get_sheet_by_name('Replies')
 
-    global hello_list
-    global how_are_you
-    urow1 = wu['1']
-    urow2 = wu['2']
-    hello_list = [urow1[x].value for x in range(len(urow1))]
-    how_are_you = [urow2[x].value for x in range(len(urow2))]
 
-    global reply_hello_list
-    global reply_how_are_you
-    rrow1 = wr['1']
-    rrow2 = wr['2']
-    reply_hello_list = [rrow1[x].value for x in range(len(rrow1))]
-    reply_how_are_you = [rrow2[x].value for x in range(len(rrow2))]
-
-#Main Program-------------------------------
-excel()
-while 1:
-    start_recognizer()
-#Notes--------------------------------------
+main()
+# ********************************************
+# *----------------Notes---------------------*
+# ********************************************
