@@ -115,7 +115,7 @@ def face():
         if TALKING == False:
             if Count >= 100:
                 Count = Count - 100
-            print(Count)
+            # print(Count)
             img = str(Count)
             handler.render(screen,img,(A,B),True,(x,y))
             pygame.display.update(A,B,x,y)
